@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <title>Conversor Dinâmico</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Conversor de custo</h1>
+        <label for="inputText">Valor em Letras:</label>
+        <input type="text" id="inputText" placeholder="Digite um valor em letras" oninput="convertText()">
+        
+        <label for="outputNumber">Valor em Número:</label>
+        <input type="text" id="outputNumber" readonly>
+
+        <label for="markup">Markup (%):</label>
+        <input type="number" id="markup" oninput="calculateMarkup()" placeholder="Insira o percentual de markup">
+
+        <label for="finalPrice">Preço Final:</label>
+        <input type="text" id="finalPrice" readonly>
+
+        <footer>
+            <p>&copy; 2024 Maciel Poppe</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

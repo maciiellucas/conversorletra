@@ -1,0 +1,62 @@
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: #121212;
+    color: #ffffff;
+    margin: 0;
+    height: 100vh; /* Definindo altura total da tela */
+    display: flex; /* Usando flexbox */
+    justify-content: center; /* Centraliza horizontalmente */
+    align-items: center; /* Centraliza verticalmente */
+}
+
+.container {
+    max-width: 400px; /* Largura máxima reduzida */
+    width: 100%; /* Largura 100% para melhor responsividade */
+    padding: 50px;
+    border-radius: 8px;
+    background-color: #1e1e1e;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin: 10px 0 5px;
+}
+
+input[type="text"], input[type="number"] {
+    width: 95%; /* Mantém largura em 100% */
+    padding: 10px; /* Ajustando o padding */
+    margin-bottom: 15px;
+    border: none;
+    border-radius: 4px;
+    background-color: #333333;
+    color: #ffffff;
+    font-size: 16px; /* Ajustando o tamanho da fonte */
+}
+
+input[readonly] {
+    background-color: #444444;
+}
+
+input[type="number"] {
+    appearance: none;
+    -moz-appearance: textfield; /* Para Firefox */
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+footer {
+    text-align: center; /* Centraliza o texto */
+    margin-top: 30px; /* Espaço acima do copyright */
+    font-size: 12px; /* Tamanho da fonte */
+    color: #ffffff; /* Cor do texto */
+}
