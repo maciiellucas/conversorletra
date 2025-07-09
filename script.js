@@ -3,11 +3,17 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTheme();
     setupThemeListeners();
     setupInputAnimations();
+    addTooltips(); // Inicializa tooltips na carga
+    // Inicializa os cálculos uma vez que o DOM está pronto e o tema definido
+    convertText(); 
+    calculateMarkup();
+    calculateServices(); // Garante que os campos de serviço sejam atualizados na carga
 });
 
 // Gerenciamento de temas
 function initializeTheme() {
-    const savedTheme = localStorage.getItem('conversor-theme') || 'dark';
+    // Define 'dark' como tema padrão se nenhum tema estiver salvo
+    const savedTheme = localStorage.getItem('conversor-theme') || 'dark'; 
     setTheme(savedTheme);
 }
 
@@ -157,11 +163,14 @@ function calculateMarkup() {
     // Validação aprimorada
     if (isNaN(numberInput) || numberInput <= 0) {
         finalPriceField.value = 'R$ 0,00';
+        // Assegura que os cálculos de serviço também sejam atualizados para 0 se o preço base for 0
+        calculateServices(); 
         return;
     }
     
     if (isNaN(markup) || markup < 0) {
         finalPriceField.value = formatCurrency(numberInput.toFixed(2).replace('.', ','));
+        calculateServices(); // Atualiza os cálculos de serviço mesmo se não houver markup
         return;
     }
     
@@ -174,7 +183,51 @@ function calculateMarkup() {
     
     // Efeito visual de sucesso
     animateSuccess(finalPriceField);
+
+    // Chama a função de cálculo de serviços para atualizar os valores dependentes
+    calculateServices();
 }
+
+// Função para calcular os valores de serviço
+function calculateServices() {
+    const finalPriceField = document.getElementById('finalPrice');
+    const serviceValueInput = document.getElementById('serviceValue');
+    const serviceDiscountInput = document.getElementById('serviceDiscount');
+    const discountedServiceValueField = document.getElementById('discountedServiceValue');
+    const finalPriceWithServiceNoDiscountField = document.getElementById('finalPriceWithServiceNoDiscount');
+    const finalPriceWithServiceDiscountField = document.getElementById('finalPriceWithServiceDiscount');
+
+    // Limpa "R$ " e formata o preço final do card principal
+    const cleanFinalPrice = finalPriceField.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+    const mainFinalPrice = parseFloat(cleanFinalPrice) || 0; // Garante que seja 0 se não for um número válido
+
+    let serviceValue = parseFloat(serviceValueInput.value) || 0;
+    let serviceDiscount = parseFloat(serviceDiscountInput.value) || 0;
+
+    // Garante que o desconto não seja negativo
+    if (serviceDiscount < 0) {
+        serviceDiscount = 0;
+        serviceDiscountInput.value = ''; // Limpa o campo se for negativo
+    }
+
+    // Calcula o valor dos serviços com desconto
+    const discountedServiceValue = serviceValue * (1 - serviceDiscount / 100);
+    discountedServiceValueField.value = formatCurrency(discountedServiceValue.toFixed(2).replace('.', ','));
+
+    // Calcula o preço final com serviços (sem desconto nos serviços)
+    const finalPriceNoDiscount = mainFinalPrice + serviceValue;
+    finalPriceWithServiceNoDiscountField.value = formatCurrency(finalPriceNoDiscount.toFixed(2).replace('.', ','));
+
+    // Calcula o preço final com serviços (com desconto nos serviços)
+    const finalPriceWithDiscount = mainFinalPrice + discountedServiceValue;
+    finalPriceWithServiceDiscountField.value = formatCurrency(finalPriceWithDiscount.toFixed(2).replace('.', ','));
+
+    // Efeito visual de sucesso para os campos de serviço
+    animateSuccess(discountedServiceValueField);
+    animateSuccess(finalPriceWithServiceNoDiscountField);
+    animateSuccess(finalPriceWithServiceDiscountField);
+}
+
 
 // Função para animação de sucesso
 function animateSuccess(element) {
@@ -263,12 +316,55 @@ document.getElementById('finalPrice').addEventListener('dblclick', function() {
     }
 });
 
+document.getElementById('discountedServiceValue').addEventListener('dblclick', function() {
+    if (this.value && this.value !== 'R$ 0,00') {
+        copyToClipboard(this.value);
+    }
+});
+
+document.getElementById('finalPriceWithServiceNoDiscount').addEventListener('dblclick', function() {
+    if (this.value && this.value !== 'R$ 0,00') {
+        copyToClipboard(this.value);
+    }
+});
+
+document.getElementById('finalPriceWithServiceDiscount').addEventListener('dblclick', function() {
+    if (this.value && this.value !== 'R$ 0,00') {
+        copyToClipboard(this.value);
+    }
+});
+
+
 // Adiciona eventos para atualizar automaticamente
 document.getElementById('inputText').addEventListener('input', convertText);
 document.getElementById('markup').addEventListener('input', calculateMarkup);
+document.getElementById('serviceValue').addEventListener('input', calculateServices);
+document.getElementById('serviceDiscount').addEventListener('input', calculateServices);
 
-// Atalhos de teclado
-document.addEventListener('keydown', function(e) {
+// Lógica para mostrar/esconder o card de serviços
+const servicesCard = document.querySelector('.services-card');
+const closeServicesCardBtn = document.getElementById('closeServicesCard');
+
+// Listener para o atalho Alt + C
+document.addEventListener('keydown', (e) => {
+    // Check for Alt key (e.altKey) and 'C' key (e.key === 'c' or e.key === 'C')
+    if ((e.altKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
+        e.preventDefault(); // Prevent default browser action (e.g., opening dev tools search)
+        if (servicesCard.classList.contains('hidden')) {
+            servicesCard.classList.remove('hidden');
+            servicesCard.classList.add('visible');
+            calculateServices(); // Atualiza os campos de serviço ao abrir o card
+        } else {
+            // Optional: If you want Alt+C to also close it if it's open
+            // servicesCard.classList.remove('visible');
+            // servicesCard.addEventListener('animationend', function handler() {
+            //     servicesCard.classList.add('hidden');
+            //     servicesCard.removeEventListener('animationend', handler);
+            // });
+        }
+    }
+
+    // Existing keyboard shortcuts for themes and clearing inputs
     // Ctrl/Cmd + 1, 2, 3 para alternar temas
     if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '3') {
         e.preventDefault();
@@ -283,6 +379,8 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         const inputText = document.getElementById('inputText');
         const markup = document.getElementById('markup');
+        const serviceValue = document.getElementById('serviceValue');
+        const serviceDiscount = document.getElementById('serviceDiscount');
         
         if (document.activeElement === inputText) {
             inputText.value = '';
@@ -290,11 +388,36 @@ document.addEventListener('keydown', function(e) {
         } else if (document.activeElement === markup) {
             markup.value = '';
             calculateMarkup();
+        } else if (document.activeElement === serviceValue) {
+            serviceValue.value = '';
+            calculateServices();
+        } else if (document.activeElement === serviceDiscount) {
+            serviceDiscount.value = '';
+            calculateServices();
+        } else if (servicesCard.classList.contains('visible')) {
+            // Also close the services card if Escape is pressed and it's open
+            closeServicesCardBtn.click(); // Simulate a click on the close button
         }
     }
 });
 
-// Validação em tempo real para o campo de markup
+
+closeServicesCardBtn.addEventListener('click', () => {
+    servicesCard.classList.remove('visible');
+    // Adiciona um listener para quando a animação de `slideOutServices` terminar
+    // e só então aplicar `display: none;`
+    servicesCard.addEventListener('animationend', function handler() {
+        servicesCard.classList.add('hidden'); // hidden já tem display: none
+        servicesCard.removeEventListener('animationend', handler);
+    });
+    // Limpa os campos do card de serviços ao fechar
+    document.getElementById('serviceValue').value = '';
+    document.getElementById('serviceDiscount').value = '';
+    calculateServices(); // Recalcula para exibir 0,00
+});
+
+
+// Validação em tempo real para os campos de markup e desconto
 document.getElementById('markup').addEventListener('input', function(e) {
     let value = e.target.value;
     
@@ -312,13 +435,36 @@ document.getElementById('markup').addEventListener('input', function(e) {
     e.target.value = value;
 });
 
+document.getElementById('serviceDiscount').addEventListener('input', function(e) {
+    let value = e.target.value;
+    
+    // Remove caracteres não numéricos (exceto ponto e vírgula)
+    value = value.replace(/[^0-9.,]/g, '');
+    
+    // Limita a 2 casas decimais
+    if (value.includes(',')) {
+        const parts = value.split(',');
+        if (parts[1] && parts[1].length > 2) {
+            value = parts[0] + ',' + parts[1].substring(0, 2);
+        }
+    }
+    
+    e.target.value = value;
+});
+
+
 // Adiciona tooltips informativos
 function addTooltips() {
     const tooltips = {
         'inputText': 'Use as letras: P=1, E=2, R=3, N=4, A=5, M=6, B=7, U=8, C=9, O=0',
         'markup': 'Digite o percentual de markup (ex: 20 para 20%)',
         'outputNumber': 'Duplo clique para copiar',
-        'finalPrice': 'Duplo clique para copiar'
+        'finalPrice': 'Duplo clique para copiar',
+        'serviceValue': 'Digite o valor dos serviços em Reais',
+        'serviceDiscount': 'Digite o percentual de desconto nos serviços (ex: 10 para 10%)',
+        'discountedServiceValue': 'Duplo clique para copiar',
+        'finalPriceWithServiceNoDiscount': 'Duplo clique para copiar',
+        'finalPriceWithServiceDiscount': 'Duplo clique para copiar'
     };
     
     Object.entries(tooltips).forEach(([id, text]) => {
@@ -329,5 +475,5 @@ function addTooltips() {
     });
 }
 
-// Inicializa tooltips
-addTooltips();
+
+
