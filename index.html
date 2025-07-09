@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR" data-theme="light">
+<html lang="pt-BR" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,30 +8,52 @@
     <title>Conversor Dinâmico</title>
 </head>
 <body>
-    <div class="container">
+    <div class="main-content">
         <div class="theme-switcher">
-            <button class="theme-btn light active" data-theme="light" title="Tema Claro"></button>
-            <button class="theme-btn dark" data-theme="dark" title="Tema Escuro"></button>
+            <button class="theme-btn light" data-theme="light" title="Tema Claro"></button>
+            <button class="theme-btn dark active" data-theme="dark" title="Tema Escuro"></button>
             <button class="theme-btn slate" data-theme="slate" title="Tema Slate"></button>
         </div>
-        
-        <h1>Conversor de Custo</h1>
-        
-        <label for="inputText">Valor em Letras:</label>
-        <input type="text" id="inputText" placeholder="Digite um valor em letras" oninput="convertText()">
-        
-        <label for="outputNumber">Valor em Números:</label>
-        <input type="text" id="outputNumber" readonly>
-        
-        <label for="markup">Markup (%):</label>
-        <input type="number" id="markup" oninput="calculateMarkup()" placeholder="Insira o percentual de markup">
-        
-        <label for="finalPrice">Preço Final:</label>
-        <input type="text" id="finalPrice" readonly>
-        
-        <footer>
-            <p>&copy; 2025 Maciel Poppe</p>
-        </footer>
+        <div class="container main-card">
+            
+            <h1>Conversor de Custo</h1>
+            
+            <label for="inputText">Valor em Letras:</label>
+            <input type="text" id="inputText" placeholder="Digite um valor em letras" oninput="convertText()">
+            
+            <label for="outputNumber">Valor em Números:</label>
+            <input type="text" id="outputNumber" readonly>
+            
+            <label for="markup">Markup (%):</label>
+            <input type="number" id="markup" oninput="calculateMarkup()" placeholder="Insira o percentual de markup">
+            
+            <label for="finalPrice">Preço Final:</label>
+            <input type="text" id="finalPrice" readonly>
+            
+            <footer>
+                <p>&copy; 2025 Maciel Poppe</p>
+            </footer>
+        </div>
+
+        <div class="container services-card hidden">
+            <button class="close-btn" id="closeServicesCard">&times;</button>
+            <h2>Cálculo de Serviços</h2>
+
+            <label for="serviceValue">Valor dos Serviços (R$):</label>
+            <input type="number" id="serviceValue" placeholder="Digite o valor dos serviços" oninput="calculateServices()">
+            
+            <label for="serviceDiscount">Desconto nos Serviços (%):</label>
+            <input type="number" id="serviceDiscount" placeholder="Insira o percentual de desconto" oninput="calculateServices()">
+            
+            <label for="discountedServiceValue">Valor dos Serviços com Desconto:</label>
+            <input type="text" id="discountedServiceValue" readonly>
+
+            <label for="finalPriceWithServiceNoDiscount">Preço Final com Serviços (sem desconto):</label>
+            <input type="text" id="finalPriceWithServiceNoDiscount" readonly>
+
+            <label for="finalPriceWithServiceDiscount">Preço Final com Serviços (com desconto):</label>
+            <input type="text" id="finalPriceWithServiceDiscount" readonly>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>
