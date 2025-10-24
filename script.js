@@ -3,16 +3,16 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeTheme();
     setupThemeListeners();
     setupInputAnimations();
-    addTooltips(); // Inicializa tooltips na carga
-    // Inicializa os cálculos uma vez que o DOM está pronto e o tema definido
+    addTooltips(); 
     convertText(); 
     calculateMarkup();
-    calculateServices(); // Garante que os campos de serviço sejam atualizados na carga
+    calculateServices();
 });
 
-// Gerenciamento de temas
+// -------------------------------
+// GERENCIAMENTO DE TEMA
+// -------------------------------
 function initializeTheme() {
-    // Define 'dark' como tema padrão se nenhum tema estiver salvo
     const savedTheme = localStorage.getItem('conversor-theme') || 'dark'; 
     setTheme(savedTheme);
 }
@@ -20,8 +20,7 @@ function initializeTheme() {
 function setTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('conversor-theme', theme);
-    
-    // Atualiza botões ativos
+
     document.querySelectorAll('.theme-btn').forEach(btn => {
         btn.classList.remove('active');
         if (btn.getAttribute('data-theme') === theme) {
@@ -35,8 +34,6 @@ function setupThemeListeners() {
         btn.addEventListener('click', () => {
             const theme = btn.getAttribute('data-theme');
             setTheme(theme);
-            
-            // Feedback visual
             btn.style.transform = 'scale(0.9)';
             setTimeout(() => {
                 btn.style.transform = '';
@@ -45,19 +42,21 @@ function setupThemeListeners() {
     });
 }
 
-// Animações para inputs
+// -------------------------------
+// INPUT ANIMAÇÕES
+// -------------------------------
 function setupInputAnimations() {
     const inputs = document.querySelectorAll('input');
-    
+
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             input.parentElement?.classList.add('focused');
         });
-        
+
         input.addEventListener('blur', () => {
             input.parentElement?.classList.remove('focused');
         });
-        
+
         input.addEventListener('input', () => {
             if (input.value && !input.readOnly) {
                 input.classList.add('loading');
@@ -69,28 +68,28 @@ function setupInputAnimations() {
     });
 }
 
-// Função principal de conversão
+// -------------------------------
+// CONVERSÃO TEXTO → NÚMERO
+// -------------------------------
 function convertText() {
     const textInput = document.getElementById('inputText').value.toUpperCase();
     const numberOutput = document.getElementById('outputNumber');
-    
-    // Mapeamento de letras para números
+
     const letterToNumber = {
         'P': 1, 'E': 2, 'R': 3, 'N': 4, 'A': 5, 
         'M': 6, 'B': 7, 'U': 8, 'C': 9, 'O': 0
     };
-    
+
     let integerPart = "";
     let decimalPart = "";
     let isDecimal = false;
-    
-    // Validação de entrada vazia
+
     if (!textInput.trim()) {
         numberOutput.value = 'R$ 0,00';
         calculateMarkup();
         return;
     }
-    
+
     for (const char of textInput) {
         if (char === ',') {
             isDecimal = true;
@@ -102,93 +101,112 @@ function convertText() {
             }
         }
     }
-    
-    // Validação se não há números válidos
+
     if (!integerPart && !decimalPart) {
         numberOutput.value = 'R$ 0,00';
         calculateMarkup();
         return;
     }
-    
-    // Garante que sempre temos uma parte inteira
+
     if (!integerPart) integerPart = '0';
-    
-    // Concatena a parte inteira e decimal
+
     const total = integerPart + (decimalPart ? ',' + decimalPart : '');
     numberOutput.value = formatCurrency(total);
-    
-    // Efeito visual de sucesso
+
     animateSuccess(numberOutput);
-    
-    // Atualiza o preço final quando o texto é alterado
     calculateMarkup();
 }
 
+// -------------------------------
+// FORMATAR MOEDA
+// -------------------------------
 function formatCurrency(value) {
     if (typeof value !== 'string') {
         value = value.toString();
     }
-    
     if (!value || value === ',') return 'R$ 0,00';
-    
+
     const [integerPart, decimalPart] = value.split(',');
-    
-    // Formata a parte inteira com pontos
     let formattedValue = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    
-    // Adiciona a parte decimal com vírgula
+
     if (decimalPart) {
-        // Limita a duas casas decimais
         const limitedDecimal = decimalPart.substring(0, 2).padEnd(2, '0');
         formattedValue += ',' + limitedDecimal;
     } else {
         formattedValue += ',00';
     }
-    
     return 'R$ ' + formattedValue;
 }
 
+// -------------------------------
+// CALCULAR MARKUP → FINAL PRICE
+// -------------------------------
 function calculateMarkup() {
     const outputNumber = document.getElementById('outputNumber').value;
     const markupInput = document.getElementById('markup').value;
     const finalPriceField = document.getElementById('finalPrice');
-    
-    // Remove "R$ " e formata o número
+
     const cleanNumber = outputNumber.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
     const numberInput = parseFloat(cleanNumber);
-    
-    // Verifica se o input do markup é válido
-    const markup = parseFloat(markupInput);
-    
-    // Validação aprimorada
+
+    const markup = parseFloat(markupInput.replace(',', '.'));
+
     if (isNaN(numberInput) || numberInput <= 0) {
         finalPriceField.value = 'R$ 0,00';
-        // Assegura que os cálculos de serviço também sejam atualizados para 0 se o preço base for 0
         calculateServices(); 
         return;
     }
-    
+
     if (isNaN(markup) || markup < 0) {
         finalPriceField.value = formatCurrency(numberInput.toFixed(2).replace('.', ','));
-        calculateServices(); // Atualiza os cálculos de serviço mesmo se não houver markup
+        calculateServices();
         return;
     }
-    
-    // Calcula o preço final
+
     const finalPrice = numberInput * (1 + markup / 100);
-    
-    // Formatação do preço final
     const formattedFinalPrice = formatCurrency(finalPrice.toFixed(2).replace('.', ','));
     finalPriceField.value = formattedFinalPrice;
-    
-    // Efeito visual de sucesso
-    animateSuccess(finalPriceField);
 
-    // Chama a função de cálculo de serviços para atualizar os valores dependentes
+    animateSuccess(finalPriceField);
     calculateServices();
 }
 
-// Função para calcular os valores de serviço
+// -------------------------------
+// CALCULAR MARKUP INVERSO
+// -------------------------------
+function calculateMarkupReverse() {
+    const outputNumber = document.getElementById('outputNumber').value;
+    const finalPriceField = document.getElementById('finalPrice');
+    const markupField = document.getElementById('markup');
+
+    let cleanBase = outputNumber.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+    let cleanFinal = finalPriceField.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
+
+    const baseValue = parseFloat(cleanBase);
+    let finalValue = parseFloat(cleanFinal);
+
+    if (isNaN(baseValue) || baseValue <= 0 || isNaN(finalValue) || finalValue <= 0) {
+        markupField.value = '';
+        finalPriceField.value = formatCurrency('0,00');
+        calculateServices();
+        return;
+    }
+
+    // Calcula o markup
+    const markupPercent = ((finalValue / baseValue - 1) * 100).toFixed(2);
+    markupField.value = markupPercent.replace('.', ',');
+
+    // Formata o campo finalPrice em moeda
+    finalPriceField.value = formatCurrency(finalValue.toFixed(2).replace('.', ','));
+
+    animateSuccess(markupField);
+    calculateServices();
+}
+
+
+// -------------------------------
+// CALCULAR SERVIÇOS
+// -------------------------------
 function calculateServices() {
     const finalPriceField = document.getElementById('finalPrice');
     const serviceValueInput = document.getElementById('serviceValue');
@@ -197,54 +215,49 @@ function calculateServices() {
     const finalPriceWithServiceNoDiscountField = document.getElementById('finalPriceWithServiceNoDiscount');
     const finalPriceWithServiceDiscountField = document.getElementById('finalPriceWithServiceDiscount');
 
-    // Limpa "R$ " e formata o preço final do card principal
     const cleanFinalPrice = finalPriceField.value.replace('R$ ', '').replace(/\./g, '').replace(',', '.');
-    const mainFinalPrice = parseFloat(cleanFinalPrice) || 0; // Garante que seja 0 se não for um número válido
+    const mainFinalPrice = parseFloat(cleanFinalPrice) || 0;
 
-    let serviceValue = parseFloat(serviceValueInput.value) || 0;
-    let serviceDiscount = parseFloat(serviceDiscountInput.value) || 0;
+    let serviceValue = parseFloat(serviceValueInput.value.replace(',', '.')) || 0;
+    let serviceDiscount = parseFloat(serviceDiscountInput.value.replace(',', '.')) || 0;
 
-    // Garante que o desconto não seja negativo
     if (serviceDiscount < 0) {
         serviceDiscount = 0;
-        serviceDiscountInput.value = ''; // Limpa o campo se for negativo
+        serviceDiscountInput.value = '';
     }
 
-    // Calcula o valor dos serviços com desconto
     const discountedServiceValue = serviceValue * (1 - serviceDiscount / 100);
     discountedServiceValueField.value = formatCurrency(discountedServiceValue.toFixed(2).replace('.', ','));
 
-    // Calcula o preço final com serviços (sem desconto nos serviços)
     const finalPriceNoDiscount = mainFinalPrice + serviceValue;
     finalPriceWithServiceNoDiscountField.value = formatCurrency(finalPriceNoDiscount.toFixed(2).replace('.', ','));
 
-    // Calcula o preço final com serviços (com desconto nos serviços)
     const finalPriceWithDiscount = mainFinalPrice + discountedServiceValue;
     finalPriceWithServiceDiscountField.value = formatCurrency(finalPriceWithDiscount.toFixed(2).replace('.', ','));
 
-    // Efeito visual de sucesso para os campos de serviço
     animateSuccess(discountedServiceValueField);
     animateSuccess(finalPriceWithServiceNoDiscountField);
     animateSuccess(finalPriceWithServiceDiscountField);
 }
 
-
-// Função para animação de sucesso
+// -------------------------------
+// ANIMAÇÃO SUCESSO
+// -------------------------------
 function animateSuccess(element) {
     element.style.transform = 'scale(1.02)';
     element.style.transition = 'transform 0.2s ease';
-    
     setTimeout(() => {
         element.style.transform = 'scale(1)';
     }, 200);
 }
 
-// Função para copiar valor para área de transferência
+// -------------------------------
+// COPY TO CLIPBOARD
+// -------------------------------
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
         showNotification('Valor copiado!');
     }).catch(() => {
-        // Fallback para browsers mais antigos
         const textArea = document.createElement('textarea');
         textArea.value = text;
         document.body.appendChild(textArea);
@@ -255,14 +268,12 @@ function copyToClipboard(text) {
     });
 }
 
-// Sistema de notificações
 function showNotification(message) {
-    // Remove notificações existentes
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {
         existingNotification.remove();
     }
-    
+
     const notification = document.createElement('div');
     notification.className = 'notification';
     notification.textContent = message;
@@ -279,23 +290,21 @@ function showNotification(message) {
         animation: slideInRight 0.3s ease;
         box-shadow: 0 4px 12px rgba(0,0,0,0.2);
     `;
-    
+
     document.body.appendChild(notification);
-    
+
     setTimeout(() => {
         notification.style.animation = 'slideOutRight 0.3s ease forwards';
         setTimeout(() => notification.remove(), 300);
     }, 2000);
 }
 
-// Adiciona CSS para animações de notificação
 const notificationStyles = document.createElement('style');
 notificationStyles.textContent = `
     @keyframes slideInRight {
         from { transform: translateX(100%); opacity: 0; }
         to { transform: translateX(0); opacity: 1; }
     }
-    
     @keyframes slideOutRight {
         from { transform: translateX(0); opacity: 1; }
         to { transform: translateX(100%); opacity: 0; }
@@ -303,69 +312,90 @@ notificationStyles.textContent = `
 `;
 document.head.appendChild(notificationStyles);
 
-// Adiciona eventos de duplo clique para copiar valores
+// -------------------------------
+// EVENTOS DE DUPLO CLIQUE
+// -------------------------------
 document.getElementById('outputNumber').addEventListener('dblclick', function() {
     if (this.value && this.value !== 'R$ 0,00') {
         copyToClipboard(this.value);
     }
 });
-
 document.getElementById('finalPrice').addEventListener('dblclick', function() {
     if (this.value && this.value !== 'R$ 0,00') {
         copyToClipboard(this.value);
     }
 });
-
 document.getElementById('discountedServiceValue').addEventListener('dblclick', function() {
     if (this.value && this.value !== 'R$ 0,00') {
         copyToClipboard(this.value);
     }
 });
-
 document.getElementById('finalPriceWithServiceNoDiscount').addEventListener('dblclick', function() {
     if (this.value && this.value !== 'R$ 0,00') {
         copyToClipboard(this.value);
     }
 });
-
 document.getElementById('finalPriceWithServiceDiscount').addEventListener('dblclick', function() {
     if (this.value && this.value !== 'R$ 0,00') {
         copyToClipboard(this.value);
     }
 });
 
-
-// Adiciona eventos para atualizar automaticamente
+// -------------------------------
+// OUTROS EVENTOS
+// -------------------------------
 document.getElementById('inputText').addEventListener('input', convertText);
 document.getElementById('markup').addEventListener('input', calculateMarkup);
+document.getElementById('finalPrice').addEventListener('blur', calculateMarkupReverse);
 document.getElementById('serviceValue').addEventListener('input', calculateServices);
 document.getElementById('serviceDiscount').addEventListener('input', calculateServices);
 
-// Lógica para mostrar/esconder o card de serviços
+// -------------------------------
+// CALCULAR MARKUP INVERSO AUTOMATICAMENTE (SEM ZERAR AO DIGITAR DEVAGAR)
+// -------------------------------
+let markupReverseTimeout;
+const finalPriceInput = document.getElementById('finalPrice');
+
+finalPriceInput.addEventListener('input', function () {
+    clearTimeout(markupReverseTimeout);
+
+    const rawValue = finalPriceInput.value
+        .replace(/[^\d,]/g, '') // remove tudo que não é número ou vírgula
+        .trim();
+
+    // se o campo estiver vazio, não faz nada
+    if (!rawValue) return;
+
+    // se o valor termina com vírgula (ex: "10,") ou está incompleto, aguarda mais digitação
+    if (rawValue.endsWith(',')) return;
+
+    // só calcula se houver pelo menos um número antes e, opcionalmente, dois após a vírgula
+    const validPattern = /^\d+(,\d{1,2})?$/;
+    if (!validPattern.test(rawValue)) return;
+
+    // espera o usuário parar de digitar por 800 ms antes de calcular
+    markupReverseTimeout = setTimeout(() => {
+        calculateMarkupReverse();
+    }, 800);
+});
+
+// ainda calcula ao sair do campo (garantia extra)
+finalPriceInput.addEventListener('blur', calculateMarkupReverse);
+
+
 const servicesCard = document.querySelector('.services-card');
 const closeServicesCardBtn = document.getElementById('closeServicesCard');
 
-// Listener para o atalho Alt + C
 document.addEventListener('keydown', (e) => {
-    // Check for Alt key (e.altKey) and 'C' key (e.key === 'c' or e.key === 'C')
     if ((e.altKey || e.metaKey) && (e.key === 'c' || e.key === 'C')) {
-        e.preventDefault(); // Prevent default browser action (e.g., opening dev tools search)
+        e.preventDefault();
         if (servicesCard.classList.contains('hidden')) {
             servicesCard.classList.remove('hidden');
             servicesCard.classList.add('visible');
-            calculateServices(); // Atualiza os campos de serviço ao abrir o card
-        } else {
-            // Optional: If you want Alt+C to also close it if it's open
-            // servicesCard.classList.remove('visible');
-            // servicesCard.addEventListener('animationend', function handler() {
-            //     servicesCard.classList.add('hidden');
-            //     servicesCard.removeEventListener('animationend', handler);
-            // });
+            calculateServices();
         }
     }
 
-    // Existing keyboard shortcuts for themes and clearing inputs
-    // Ctrl/Cmd + 1, 2, 3 para alternar temas
     if ((e.ctrlKey || e.metaKey) && e.key >= '1' && e.key <= '3') {
         e.preventDefault();
         const themes = ['light', 'dark', 'slate'];
@@ -374,14 +404,13 @@ document.addEventListener('keydown', (e) => {
             setTheme(themes[themeIndex]);
         }
     }
-    
-    // Escape para limpar campos
+
     if (e.key === 'Escape') {
         const inputText = document.getElementById('inputText');
         const markup = document.getElementById('markup');
         const serviceValue = document.getElementById('serviceValue');
         const serviceDiscount = document.getElementById('serviceDiscount');
-        
+
         if (document.activeElement === inputText) {
             inputText.value = '';
             convertText();
@@ -395,85 +424,121 @@ document.addEventListener('keydown', (e) => {
             serviceDiscount.value = '';
             calculateServices();
         } else if (servicesCard.classList.contains('visible')) {
-            // Also close the services card if Escape is pressed and it's open
-            closeServicesCardBtn.click(); // Simulate a click on the close button
+            closeServicesCardBtn.click();
         }
     }
 });
 
-
 closeServicesCardBtn.addEventListener('click', () => {
     servicesCard.classList.remove('visible');
-    // Adiciona um listener para quando a animação de `slideOutServices` terminar
-    // e só então aplicar `display: none;`
     servicesCard.addEventListener('animationend', function handler() {
-        servicesCard.classList.add('hidden'); // hidden já tem display: none
+        servicesCard.classList.add('hidden');
         servicesCard.removeEventListener('animationend', handler);
     });
-    // Limpa os campos do card de serviços ao fechar
     document.getElementById('serviceValue').value = '';
     document.getElementById('serviceDiscount').value = '';
-    calculateServices(); // Recalcula para exibir 0,00
+    calculateServices();
 });
 
-
-// Validação em tempo real para os campos de markup e desconto
+// -------------------------------
+// FORMATAR INPUTS NUMÉRICOS
+// -------------------------------
 document.getElementById('markup').addEventListener('input', function(e) {
     let value = e.target.value;
-    
-    // Remove caracteres não numéricos (exceto ponto e vírgula)
     value = value.replace(/[^0-9.,]/g, '');
-    
-    // Limita a 2 casas decimais
     if (value.includes(',')) {
         const parts = value.split(',');
         if (parts[1] && parts[1].length > 2) {
             value = parts[0] + ',' + parts[1].substring(0, 2);
         }
     }
-    
     e.target.value = value;
 });
 
 document.getElementById('serviceDiscount').addEventListener('input', function(e) {
     let value = e.target.value;
-    
-    // Remove caracteres não numéricos (exceto ponto e vírgula)
     value = value.replace(/[^0-9.,]/g, '');
-    
-    // Limita a 2 casas decimais
     if (value.includes(',')) {
         const parts = value.split(',');
         if (parts[1] && parts[1].length > 2) {
             value = parts[0] + ',' + parts[1].substring(0, 2);
         }
     }
-    
     e.target.value = value;
 });
 
+document.getElementById('serviceValue').addEventListener('input', function(e) {
+    let value = e.target.value;
+    value = value.replace(/[^0-9.,]/g, '');
+    if (value.includes(',')) {
+        const parts = value.split(',');
+        if (parts[1] && parts[1].length > 2) {
+            value = parts[0] + ',' + parts[1].substring(0, 2);
+        }
+    }
+    e.target.value = value;
+});
 
-// Adiciona tooltips informativos
+// -------------------------------
+// TOOLTIPS
+// -------------------------------
 function addTooltips() {
     const tooltips = {
         'inputText': 'Use as letras: P=1, E=2, R=3, N=4, A=5, M=6, B=7, U=8, C=9, O=0',
         'markup': 'Digite o percentual de markup (ex: 20 para 20%)',
         'outputNumber': 'Duplo clique para copiar',
-        'finalPrice': 'Duplo clique para copiar',
+        'finalPrice': 'Duplo clique para copiar ou digite o valor final para calcular o markup inverso',
         'serviceValue': 'Digite o valor dos serviços em Reais',
         'serviceDiscount': 'Digite o percentual de desconto nos serviços (ex: 10 para 10%)',
         'discountedServiceValue': 'Duplo clique para copiar',
         'finalPriceWithServiceNoDiscount': 'Duplo clique para copiar',
         'finalPriceWithServiceDiscount': 'Duplo clique para copiar'
     };
-    
+
     Object.entries(tooltips).forEach(([id, text]) => {
         const element = document.getElementById(id);
         if (element) {
             element.title = text;
         }
     });
+
+/// -------------------------------
+// ENTER PARA PULAR ENTRE CAMPOS (TAB SIMULADO) — IGNORA READONLY + SELECIONA CONTEÚDO
+// -------------------------------
+document.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+
+    e.preventDefault(); // impede o comportamento padrão (ex: envio de formulário)
+
+    // Pega apenas inputs visíveis e editáveis (ignora readonly e disabled)
+    const allInputs = Array.from(document.querySelectorAll('input'))
+        .filter(inp => {
+            const style = window.getComputedStyle(inp);
+            const isVisible = style.display !== 'none' && style.visibility !== 'hidden' && inp.type !== 'hidden';
+            return isVisible && !inp.disabled && !inp.readOnly;
+        });
+
+    if (allInputs.length === 0) return;
+
+    const active = document.activeElement;
+    let idx = allInputs.indexOf(active);
+
+    // Se o campo atual não estiver na lista, foca o primeiro
+    if (idx === -1) {
+        allInputs[0].focus();
+        allInputs[0].select();
+        return;
+    }
+
+    // Move para o próximo campo (volta ao primeiro se for o último)
+    const nextIndex = (idx + 1) % allInputs.length;
+    const next = allInputs[nextIndex];
+
+    // Foca e seleciona o texto do próximo campo
+    next.focus();
+    setTimeout(() => next.select(), 50); // pequeno atraso pra garantir que o foco esteja ativo
+});
+
+
+    
 }
-
-
-
