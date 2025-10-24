@@ -373,10 +373,10 @@ finalPriceInput.addEventListener('input', function () {
     const validPattern = /^\d+(,\d{1,2})?$/;
     if (!validPattern.test(rawValue)) return;
 
-    // espera o usuário parar de digitar por 800 ms antes de calcular
+    // espera o usuário parar de digitar por 10000 ms antes de calcular
     markupReverseTimeout = setTimeout(() => {
         calculateMarkupReverse();
-    }, 800);
+    }, 10000);
 });
 
 // ainda calcula ao sair do campo (garantia extra)
@@ -542,3 +542,4 @@ document.addEventListener('keydown', function (e) {
 
     
 }
+
